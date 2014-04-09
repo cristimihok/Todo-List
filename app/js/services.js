@@ -44,7 +44,7 @@ myApp.factory('todoListSvc', function ($resource, $http, $q) {
 		save: function (item) {
 			var newTodo = new todoResource({info: item});
 			newTodo.$save();
-			return newTodo;
+			return newTodo; 
 
 
 		}
