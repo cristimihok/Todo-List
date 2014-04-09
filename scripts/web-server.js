@@ -4,11 +4,10 @@ var util = require('util'),
     http = require('http'),
     fs = require('fs'),
     url = require('url'),
-    events = require('events');
+    events = require('events'),
+    promise = require('q');
 
 var DEFAULT_PORT = 8000;
-
-var id = 1;
 
 function main(argv) {
   new HttpServer({
@@ -262,39 +261,106 @@ StaticServlet.prototype.sendJson_ = function(req, res, path) {
   req.on('end', function() {
     // Request ended -> do something with the data
     reqBody = JSON.parse(reqBody);
-    reqBody.id = ++id;
 
-    updateFile(path, reqBody);
 
-    //write back to client
-    res.writeHead(200, "OK", {'Content-Type': 'application/json'});
-    res.write(reqBody);
-    res.end();
+    // updateFile(path, reqBody).then(function (val) {
+    //   //util.puts(val);
+    // });
+
+    readFromFile(path).then(
+      function (val) {
+        //util.puts(val[0].info);
+        reqBody.id = getId(val);
+        val.push(reqBody);
+
+        //save to file
+        writeToFile(path, JSON.stringify(val));
+
+        //write back to client
+        res.writeHead(200, "OK", {'Content-Type': 'application/json'});
+        res.write(JSON.stringify(reqBody));
+        res.end();
+      },
+      function (val) {
+        util.puts(val);
+
+        //write back to client
+        // res.writeHead(500, "R", {'Content-Type': 'application/json'});
+        // res.write("valu");
+        // res.end();
+      }
+    );
+
+    // var resBody = JSON.stringify(reqBody);
+    // //write back to client
+    // res.write(resBody);
+    // res.end();
 
 
   });
 };
 
-function updateFile (path, reqBody) {
+
+// function updateFile (path, reqBody) {
+//   var dfd = promise.defer();
+
+//   fs.readFile(path, 'utf8', function (err,data) {
+//     if (err) {
+//       return console.log(err);
+//     }
+
+
+
+//     var dataFromFile = JSON.parse(data);
+
+//     dataFromFile.push(reqBody);
+//     dataFromFile = JSON.stringify(dataFromFile);
+//     dfd.resolve(dataFromFile);
+
+//     fs.writeFile(path, dataFromFile, function(err){
+//       if (err) {
+//         util.puts(err);
+//       } else {
+//         util.puts('The file has been saved at ' + path);
+//       }
+//     });
+//   });
+
+//   return dfd.promise;
+// }
+
+function readFromFile (path) {
+
+  var dfd = promise.defer();
+
   fs.readFile(path, 'utf8', function (err,data) {
     if (err) {
-      return console.log(err);
+      dfd.reject('error reading from file');
     }
-    var dataFromFile = JSON.parse(data);
-    dataFromFile.push(reqBody);
-    dataFromFile = JSON.stringify(dataFromFile);
-    util.puts(dataFromFile);
+    dfd.resolve(JSON.parse(data));
+  });
+  return dfd.promise;
+}
 
-    fs.writeFile(path, dataFromFile, function(err){
-      if (err) {
-        util.puts(err);
-      } else {
-        util.puts('The file has been saved at ' + path);
-      }
-    });
 
+function writeToFile(path, data) {
+  fs.writeFile(path, data, function(err){
+    if (err) {
+      util.puts(err);
+    } else {
+      util.puts('The file has been saved at ' + path);
+    }
   });
 }
 
+function getId(dataFromFile) {
+  var id = 0;
+
+  dataFromFile.forEach(function (item) {
+    id = (item.id > id) ? item.id : id;
+  });
+
+  return ++id;
+}
 // Must be last,
 main(process.argv);

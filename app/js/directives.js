@@ -20,6 +20,7 @@ myApp.directive('todoList', function (todoListSvc) {
 
 			$scope.addTodo = function(item) {
 				if (item) $scope.todo.push(todoListSvc.save(item));
+				debugger;
 			}
 		}
 

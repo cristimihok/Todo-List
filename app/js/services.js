@@ -42,9 +42,20 @@ myApp.factory('todoListSvc', function ($resource, $http, $q) {
 
 		//Saves the new todo item and returns a Resource object which will bind to the scope on resolved
 		save: function (item) {
+			var dfd = $q.defer();
 			var newTodo = new todoResource({info: item});
-			newTodo.$save();
-			return newTodo; 
+			newTodo.$save()
+			// .then(
+			// 	function (val) {
+			// 		console.log(val);
+			// 		dfd.resolve(val);
+			// 	},
+			// 	function (val) {
+			// 		console.log(val);
+			// 	}
+			// );
+
+			return newTodo;
 
 
 		}

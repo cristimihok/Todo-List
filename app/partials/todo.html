@@ -11,7 +11,7 @@
 
   <br/>
 
-  <div ng-repeat="item in todo track by item.id">
+  <div ng-repeat="item in todo track by $index">
     <div class="row">
       <div class="col-md-4 col-md-offset-4 col-xs-10 col-xs-offset-1" >
         <p style="background-color: grey" class="padding-left-1"> {{item.info}}  </p>
