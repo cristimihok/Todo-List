@@ -5,6 +5,7 @@
 
 myApp.directive('todoList', function (todoListSvc) {
 	return {
+
 		restrict: 'E',
 
 		templateUrl: 'partials/todo.html',
@@ -14,16 +15,15 @@ myApp.directive('todoList', function (todoListSvc) {
 		link: function (scope, elem, attrs) { },
 
 		controller: function($scope) {
-			//todo: list of strings
-			$scope.todo = todoListSvc.getAll();
-			//console.log($scope.todo);
-			$scope.addTodo = function(item) {
-				todoListSvc.addTodo(item);
-				console.log($scope.todo);
 
+			$scope.todo = todoListSvc.getAll();
+
+			$scope.addTodo = function(item) {
+				if (item) $scope.todo.push(todoListSvc.save(item));
 			}
 		}
-	}
+
+	}//return service object
 });
 
 
@@ -42,11 +42,11 @@ myApp.directive('onEnter', function () {
 
 			elem.keypress(function (event) {
 				var keycode = (event.keyCode ? event.keyCode : event.which);
-				console.log(keycode);
 
 				//if key pressed is Enter then call the function passed from parent scope
 				if (keycode === 13) {
-					scope.$apply(scope.onEnter());
+					//scope.$apply(scope.onEnter());
+					scope.onEnter();
 				}
 			});
 		}

@@ -8,10 +8,13 @@ var util = require('util'),
 
 var DEFAULT_PORT = 8000;
 
+var id = 1;
+
 function main(argv) {
   new HttpServer({
     'GET': createServlet(StaticServlet),
-    'HEAD': createServlet(StaticServlet)
+    'HEAD': createServlet(StaticServlet),
+    'POST': createServlet(StaticServlet)
   }).start(Number(argv[2]) || DEFAULT_PORT);
 }
 
@@ -91,6 +94,12 @@ StaticServlet.prototype.handleRequest = function(req, res) {
     return String.fromCharCode(parseInt(hex, 16));
   });
   var parts = path.split('/');
+
+  //Catch the POST request
+  if (req.method === 'POST') {
+    return self.sendJson_(req, res, path);
+  }
+
   if (parts[parts.length-1].charAt(0) === '.')
     return self.sendForbidden_(req, res, path);
   fs.stat(path, function(err, stat) {
@@ -239,6 +248,53 @@ StaticServlet.prototype.writeDirectoryIndex_ = function(req, res, path, files) {
   res.write('</ol>');
   res.end();
 };
+
+// Add a sendJson_ function to the StaticServlet prototype
+StaticServlet.prototype.sendJson_ = function(req, res, path) {
+  var self = this,
+      reqBody = '';
+
+  req.on('data', function(chunk) {
+    // Append the current chunk of data to the reqBody variable
+    reqBody += chunk;
+  });
+
+  req.on('end', function() {
+    // Request ended -> do something with the data
+    reqBody = JSON.parse(reqBody);
+    reqBody.id = ++id;
+
+    updateFile(path, reqBody);
+
+    //write back to client
+    res.writeHead(200, "OK", {'Content-Type': 'application/json'});
+    res.write(reqBody);
+    res.end();
+
+
+  });
+};
+
+function updateFile (path, reqBody) {
+  fs.readFile(path, 'utf8', function (err,data) {
+    if (err) {
+      return console.log(err);
+    }
+    var dataFromFile = JSON.parse(data);
+    dataFromFile.push(reqBody);
+    dataFromFile = JSON.stringify(dataFromFile);
+    util.puts(dataFromFile);
+
+    fs.writeFile(path, dataFromFile, function(err){
+      if (err) {
+        util.puts(err);
+      } else {
+        util.puts('The file has been saved at ' + path);
+      }
+    });
+
+  });
+}
 
 // Must be last,
 main(process.argv);
